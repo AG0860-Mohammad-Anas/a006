@@ -1,0 +1,6 @@
+fastmcp>=3.4.2
+python-dotenv>=1.2.2
+pytest>=9.1.1
+pydantic>=2.13.4
+requests>=2.34.2
+langchain-groq>=1.1.3
