@@ -5,7 +5,7 @@ from src.host import run_agent
 
 async def main():
     print("=" * 60)
-    print("🚀 A006 MCP Host for Jira Issue Assistant")
+    print("A006 MCP Host for Jira Issue Assistant")
     print("=" * 60)
     print("Type 'exit' to quit.\n")
 

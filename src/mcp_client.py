@@ -28,7 +28,7 @@ class JiraMCPClient:
         )
         
         await self.session.initialize()
-        print("✅ Successfully connected to Jira MCP Server!")
+        print(" Successfully connected to Jira MCP Server!")
 
     async def get_available_tools(self) -> list:
         
@@ -69,16 +69,6 @@ class JiraMCPClient:
             await self.exit_stack.aclose()
             
 
-# --- Temporary Test Block ---
-# if __name__ == "__main__":
-#     async def test_client():
-#         client = JiraMCPClient()
-#         await client.connect()
-#         tools = await client.get_available_tools()
-#         print(f"Found {len(tools)} tools: {[t['function']['name'] for t in tools]}")
-#         await client.disconnect()
-        
-#     asyncio.run(test_client())
 
 if __name__ == "__main__":
     async def test_client():

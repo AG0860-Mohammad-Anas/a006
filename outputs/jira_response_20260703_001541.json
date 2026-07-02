@@ -1,0 +1,8 @@
+{
+    "user_query": "Which issues are assigned to me?",
+    "tools_used": [
+        "search_issues"
+    ],
+    "final_answer": "The function call was not successful. Please try again or contact support for assistance.",
+    "write_action_performed": false
+}

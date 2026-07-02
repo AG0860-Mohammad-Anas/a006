@@ -1,8 +1,0 @@
-{
-    "user_query": "Show assigned issues to me",
-    "tools_used": [
-        "search_issues"
-    ],
-    "final_answer": "Error calling tool 'search_issues': 'fields'",
-    "write_action_performed": false
-}

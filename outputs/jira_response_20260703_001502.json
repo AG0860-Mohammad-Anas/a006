@@ -1,0 +1,8 @@
+{
+    "user_query": "List all Jira projects",
+    "tools_used": [
+        "list_projects"
+    ],
+    "final_answer": "Here are the listed Jira projects:\n\n1. (Example) Billing System Dev - SAM1\n2. A006 - A006",
+    "write_action_performed": false
+}

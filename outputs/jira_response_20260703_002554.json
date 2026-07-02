@@ -1,0 +1,8 @@
+{
+    "user_query": "Show open issues",
+    "tools_used": [
+        "search_issues"
+    ],
+    "final_answer": "Unfortunately, I couldn't retrieve the list of open issues due to a Jira API error. The error message indicates that the requested API has been removed and suggests migrating to the /rest/api/3/search/jql API. I'll make sure to use the correct API endpoint in the future.",
+    "write_action_performed": false
+}

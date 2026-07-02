@@ -1,8 +1,0 @@
-{
-    "user_query": "List all Jira projects",
-    "tools_used": [
-        "list_projects"
-    ],
-    "final_answer": "[\n  {\n    \"name\": \"(Example) Billing System Dev\",\n    \"key\": \"SAM1\"\n  },\n  {\n    \"name\": \"A006\",\n    \"key\": \"A006\"\n  }\n]",
-    "write_action_performed": false
-}

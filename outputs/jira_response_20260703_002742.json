@@ -1,0 +1,9 @@
+{
+    "user_query": "Show open issues",
+    "tools_used": [
+        "list_projects",
+        "search_issues"
+    ],
+    "final_answer": "Here are the open issues for the project A006:\n* A006-1: Update API documentation (Status: To Do, Priority: Medium, Assignee: Unassigned)",
+    "write_action_performed": false
+}

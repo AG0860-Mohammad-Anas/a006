@@ -1,0 +1,8 @@
+{
+    "user_query": "Summarize issue A006-3",
+    "tools_used": [
+        "get_issue_details"
+    ],
+    "final_answer": "The issue A006-3 is about implementing user authentication. It is currently in the \"To Do\" status, has a medium priority, and is assigned to Mohammad Anas.",
+    "write_action_performed": false
+}

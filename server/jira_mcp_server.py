@@ -28,11 +28,10 @@ def make_jira_req(method,endpoint,payload=None):
         if response.status_code == 204:
             return {"success": True}
         return response.json()
-    except requests.RequestException as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    except requests.exceptions.HTTPError as e:
+        return {"error": f"Jira API Error: {e.response.text}"}
+    except Exception as e:
+        return {"error": str(e)}
     
     
 mcp = FastMCP("MCP Host for Jira Issue Assistant")
@@ -53,9 +52,12 @@ def list_projects() -> str:
 @mcp.tool()
 def search_issues(jql: str) -> str:
     """
-    Search Jira issues using JQL.
+    Search Jira issues using JQL (Jira Query Language).
+    HINTS FOR AI:
+    - For open issues, use: status = "To Do"
+    - For high priority, use: priority = High OR priority = Highest
+    - For assigned to me, use: assignee = currentUser()
     """
-
     payload = {
         "jql": jql,
         "maxResults": 10,
@@ -69,15 +71,13 @@ def search_issues(jql: str) -> str:
 
     data = make_jira_req(
         "POST",
-        "/rest/api/3/search",
+        "/rest/api/3/search/jql",
         payload
     )
 
-    # Return API errors directly
     if isinstance(data, dict) and data.get("error"):
         return json.dumps(data, indent=2)
 
-    # Debug if Jira returns an unexpected response
     if "issues" not in data:
         return json.dumps(data, indent=2)
 
