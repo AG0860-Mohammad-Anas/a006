@@ -143,7 +143,7 @@ def add_issue_comment(issue_key:str,comment_txt:str)->str:
         }
     }
     try:
-        data = make_jira_req("POST",endpoint=f"/est/api/3/issue/{issue_key}/comment",payload=payload)
+        data = make_jira_req("POST",endpoint=f"/rest/api/3/issue/{issue_key}/comment",payload=payload)
         return f"Successfully added comment to {issue_key}" 
     except Exception as e:
         return f"errror {e}"
