@@ -1,0 +1,8 @@
+{
+    "user_query": "Show high-priority issues",
+    "tools_used": [
+        "search_issues"
+    ],
+    "final_answer": "[]",
+    "write_action_performed": false
+}

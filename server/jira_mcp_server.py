@@ -25,17 +25,21 @@ def make_jira_req(method,endpoint,payload=None):
             response = requests.put(url,auth=auth,headers=headers,json=payload)
              
         response.raise_for_status()
-        if not response.text:
+        if response.status_code == 204:
             return {"success": True}
         return response.json()
-    except Exception as e:
-        return {"error" : f"Jira API call fail{e}"}
+    except requests.RequestException as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
     
     
 mcp = FastMCP("MCP Host for Jira Issue Assistant")
+
 #1
 @mcp.tool()
-def get_list_projects() -> str:
+def list_projects() -> str:
     """get all the listed Jira projects"""
     data = make_jira_req("GET","/rest/api/3/project")
     simplified_output = [
@@ -47,22 +51,57 @@ def get_list_projects() -> str:
     return json.dumps(simplified_output,indent=2)
 #2
 @mcp.tool()
-def get_search_issues(jql:str) -> str:
-    """Search for Jira issues using a JQL (Jira Query Language) string.
-    Use this tool whenever the user asks to find, list, or filter issues."""
-    
-    payload = {
-        "jql" : jql,
-        "maxResults" : 10
-    }
-    
-    data = make_jira_req(method="POST",endpoint="/rest/api/3/search/jql",payload=payload)
-    
-    if "error" in data:
-        return data
-    
-    return data
+def search_issues(jql: str) -> str:
+    """
+    Search Jira issues using JQL.
+    """
 
+    payload = {
+        "jql": jql,
+        "maxResults": 10,
+        "fields": [
+            "summary",
+            "status",
+            "priority",
+            "assignee"
+        ]
+    }
+
+    data = make_jira_req(
+        "POST",
+        "/rest/api/3/search",
+        payload
+    )
+
+    # Return API errors directly
+    if isinstance(data, dict) and data.get("error"):
+        return json.dumps(data, indent=2)
+
+    # Debug if Jira returns an unexpected response
+    if "issues" not in data:
+        return json.dumps(data, indent=2)
+
+    issues = []
+
+    for issue in data.get("issues", []):
+
+        fields = issue.get("fields", {})
+
+        issues.append(
+            {
+                "key": issue.get("key"),
+                "summary": fields.get("summary"),
+                "status": fields.get("status", {}).get("name"),
+                "priority": fields.get("priority", {}).get("name"),
+                "assignee": (
+                    fields.get("assignee", {}).get("displayName")
+                    if fields.get("assignee")
+                    else "Unassigned"
+                )
+            }
+        )
+
+    return json.dumps(issues, indent=2)
 #3
 @mcp.tool()
 def get_issue_details(issue_key:str) -> str:
@@ -123,8 +162,8 @@ def get_issue_comments(issue_key:str)->str:
 #5
 @mcp.tool()
 def add_issue_comment(issue_key:str,comment_txt:str)->str:
-    """
-    """
+    """Add a comment to a Jira issue.
+    Use this whenever the user asks to comment on an issue."""    
     payload = {
         "body": {
             "type": "doc",
@@ -189,3 +228,6 @@ def update_issue_status(issue_key: str, status_name: str) -> str:
          return str(update_response)
          
     return f"Successfully updated {issue_key} to '{status_name}'." 
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")

@@ -1,17 +1,31 @@
 import asyncio
-import sys
+
 from src.host import run_agent
 
-def main():
-    print("🚀 Starting A006 MCP Host for Jira Issue Assistant...")
-    
-    # Allow the user to pass a query via the terminal, or use a default
-    if len(sys.argv) > 1:
-        query = " ".join(sys.argv[1:])
-    else:
-        query = "List all Jira projects"
-        
-    asyncio.run(run_agent(query))
+
+async def main():
+    print("=" * 60)
+    print("🚀 A006 MCP Host for Jira Issue Assistant")
+    print("=" * 60)
+    print("Type 'exit' to quit.\n")
+
+    while True:
+        try:
+            query = input("Enter your Jira query: ").strip()
+        except EOFError:
+            print("\nGoodbye!")
+            break
+
+        if query.lower() in ["exit", "quit"]:
+            print("\nGoodbye!")
+            break
+
+        if not query:
+            print("Please enter a query.\n")
+            continue
+
+        await run_agent(query)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

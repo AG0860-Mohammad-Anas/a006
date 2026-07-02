@@ -1,6 +1,8 @@
 import asyncio
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.session import ClientSession
+import sys
+import json
 
 class JiraMCPClient:
     def __init__(self):
@@ -8,9 +10,10 @@ class JiraMCPClient:
         self.exit_stack = None
 
     async def connect(self):
+        args = ["-m", "server.jira_mcp_server"]
         server_params = StdioServerParameters(
-            command="python",
-            args=["-m", "server.jira_mcp_server"]
+            command=sys.executable,
+            args=args
         )
         
         from contextlib import AsyncExitStack
@@ -67,12 +70,27 @@ class JiraMCPClient:
             
 
 # --- Temporary Test Block ---
+# if __name__ == "__main__":
+#     async def test_client():
+#         client = JiraMCPClient()
+#         await client.connect()
+#         tools = await client.get_available_tools()
+#         print(f"Found {len(tools)} tools: {[t['function']['name'] for t in tools]}")
+#         await client.disconnect()
+        
+#     asyncio.run(test_client())
+
 if __name__ == "__main__":
     async def test_client():
         client = JiraMCPClient()
         await client.connect()
+
         tools = await client.get_available_tools()
-        print(f"Found {len(tools)} tools: {[t['function']['name'] for t in tools]}")
+
+        print("=" * 80)
+        print(json.dumps(tools, indent=2))
+        print("=" * 80)
+
         await client.disconnect()
-        
+
     asyncio.run(test_client())

@@ -21,4 +21,3 @@ try:
 except Exception as e:
     raise ValueError(f"Error occur while loading ENVIRONMENT FILES {e}")
 
-print("loaded the config.py")

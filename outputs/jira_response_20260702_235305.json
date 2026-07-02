@@ -1,0 +1,8 @@
+{
+    "user_query": "Show open issues",
+    "tools_used": [
+        "search_issues"
+    ],
+    "final_answer": "Error calling tool 'search_issues': 'fields'",
+    "write_action_performed": false
+}

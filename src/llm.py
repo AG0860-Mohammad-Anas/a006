@@ -1,6 +1,6 @@
 from langchain_groq import ChatGroq
 from config import GROQ_API_KEY,GROQ_MODEL
-from prompts import SYSTEM_PROMPT
+from src.prompts import SYSTEM_PROMPT
 
 model = ChatGroq(
     model=GROQ_MODEL,
@@ -16,9 +16,11 @@ def ai_response(messages:list,tools:list=None):
             llm_with_tool = model
         
         if not messages or messages[0].get("role") != "system":
-            messages.insert(0,{"role":"system","content":SYSTEM_PROMPT})
+            messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
         
         response =  llm_with_tool.invoke(messages)
         return response
     except Exception as e:
-        return f"error occur while calling llm:{e}"
+        raise RuntimeError(
+            f"Groq invocation failed: {e}"
+        )

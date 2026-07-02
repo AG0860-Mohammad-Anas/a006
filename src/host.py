@@ -1,83 +1,221 @@
-import asyncio
 import json
+from pathlib import Path
+from datetime import datetime
+
 from src.mcp_client import JiraMCPClient
-from llm import ai_response
+from src.llm import ai_response
+
 
 async def run_agent(user_query: str):
     client = JiraMCPClient()
-    
-    # Variables to track for the FR-7 Output Requirement
+
     tools_used = []
     write_action_performed = False
-    write_tools = ["add_issue_comment", "update_issue_status"]
 
     try:
-        # 1. Connect and get tools
+        # Connect to MCP Server
         await client.connect()
-        mcp_tools = await client.get_available_tools()
-        
-        # 2. Setup Conversation History
-        messages = [{"role": "user", "content": user_query}]
-        
+
+        query = user_query.lower().strip()
+
         print(f"\n🧠 Processing query: '{user_query}'...")
-        
-        # 3. The Agentic Loop (Handles Multi-Step Reasoning - FR-5)
-        while True:
-            # Ask Groq what to do next
-            response_msg = ai_response(messages, tools=mcp_tools)
-            
-            # Append Groq's response to the history so it remembers its own thoughts
-            messages.append(response_msg)
-            
-            # If Groq didn't want to use any tools, it means it generated the final text answer!
-            if not response_msg.tool_calls:
-                final_answer = response_msg.content
-                break
-                
-            # If Groq DID want to use tools, we execute them
-            for tool_call in response_msg.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
-                
-                print(f"🛠️  LLM requested tool: {tool_name}")
-                
-                # Track for FR-7 requirements
-                tools_used.append(tool_name)
-                if tool_name in write_tools:
-                    write_action_performed = True
-                
-                # Execute the tool on the MCP Server
-                result_content = await client.call_tool(tool_name, tool_args)
-                
-                # Append the tool's result back to the conversation history
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call["id"],
-                    "name": tool_name,
-                    "content": str(result_content)
-                })
-                
+
+        # =====================================================
+        # Manual routing for common Jira queries
+        # =====================================================
+
+        if "project" in query:
+            tools_used.append("list_projects")
+            final_answer = await client.call_tool(
+                "list_projects",
+                {}
+            )
+
+        elif "high" in query and "priority" in query:
+            tools_used.append("search_issues")
+            final_answer = await client.call_tool(
+                "search_issues",
+                {
+                    "jql": "priority = High"
+                }
+            )
+
+        elif "open" in query:
+            tools_used.append("search_issues")
+            final_answer = await client.call_tool(
+                "search_issues",
+                {
+                    "jql": 'status = "To Do" OR status = Open'
+                }
+            )
+
+        elif "assigned" in query:
+            tools_used.append("search_issues")
+            final_answer = await client.call_tool(
+                "search_issues",
+                {
+                    "jql": "assignee=currentUser()"
+                }
+            )
+
+        elif "comment" in query and "add" in query:
+            import re
+
+            match = re.search(
+                r"([A-Z0-9]+-\d+)",
+                user_query,
+                re.IGNORECASE
+            )
+
+            if match:
+                issue_key = match.group(1)
+
+                comment = user_query.split(issue_key)[-1].replace(
+                    "add",
+                    ""
+                ).replace(
+                    "comment",
+                    ""
+                ).strip()
+
+                tools_used.append("add_issue_comment")
+                write_action_performed = True
+
+                final_answer = await client.call_tool(
+                    "add_issue_comment",
+                    {
+                        "issue_key": issue_key,
+                        "comment_txt": comment,
+                    },
+                )
+            else:
+                final_answer = "Issue key not found."
+
+        elif "status" in query or "move" in query:
+
+            import re
+
+            match = re.search(r"([A-Z]+-\d+)", user_query)
+
+            if match:
+
+                issue_key = match.group(1)
+
+                if "done" in query:
+                    status = "Done"
+                elif "progress" in query:
+                    status = "In Progress"
+                else:
+                    status = "To Do"
+
+                tools_used.append("update_issue_status")
+                write_action_performed = True
+
+                final_answer = await client.call_tool(
+                    "update_issue_status",
+                    {
+                        "issue_key": issue_key,
+                        "status_name": status,
+                    },
+                )
+
+            else:
+                final_answer = "Issue key not found."
+
+        elif "summary" in query or "summarize" in query:
+
+            import re
+
+            match = re.search(r"([A-Z]+-\d+)", user_query)
+
+            if match:
+
+                issue_key = match.group(1)
+
+                tools_used.append("get_issue_details")
+
+                final_answer = await client.call_tool(
+                    "get_issue_details",
+                    {
+                        "issue_key": issue_key,
+                    },
+                )
+
+            else:
+                final_answer = "Issue key not found."
+
+        elif "comments" in query:
+
+            import re
+
+            match = re.search(r"([A-Z]+-\d+)", user_query)
+
+            if match:
+
+                issue_key = match.group(1)
+
+                tools_used.append("get_issue_comments")
+
+                final_answer = await client.call_tool(
+                    "get_issue_comments",
+                    {
+                        "issue_key": issue_key,
+                    },
+                )
+
+            else:
+                final_answer = "Issue key not found."
+
+        # =====================================================
+        # Fallback to Groq
+        # =====================================================
+
+        else:
+
+            print("🤖 Using Groq reasoning...")
+
+            response = ai_response(
+                [
+                    {
+                        "role": "user",
+                        "content": user_query,
+                    }
+                ]
+            )
+
+            if hasattr(response, "content"):
+                final_answer = response.content
+            else:
+                final_answer = str(response)
+
     except Exception as e:
+
         final_answer = f"An error occurred: {e}"
-        
+
     finally:
+
         await client.disconnect()
 
-    # 4. Format Output strictly to FR-7 Requirements
     output = {
         "user_query": user_query,
-        "tools_used": list(set(tools_used)), # Remove duplicates if a tool was called twice
+        "tools_used": tools_used,
         "final_answer": final_answer,
-        "write_action_performed": write_action_performed
+        "write_action_performed": write_action_performed,
     }
-    
-    # Print the final result beautifully
-    print("\n" + "="*50)
-    print(json.dumps(output, indent=2))
-    print("="*50 + "\n")
 
-if __name__ == "__main__":
-    # Test your first query! 
-    # Make sure your Jira dummy data has at least one open issue.
-    query = "Show me all open high-priority issues."
-    asyncio.run(run_agent(query))
+    print("\n" + "=" * 50)
+    print(json.dumps(output, indent=2))
+    print("=" * 50)
+
+    output_dir = Path("outputs")
+    output_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = output_dir / f"jira_response_{timestamp}.json"
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=4)
+
+    print(f"\n✅ Output saved to: {output_file}\n")
+
+    return output

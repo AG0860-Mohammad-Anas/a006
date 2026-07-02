@@ -1,0 +1,3 @@
+"""
+Jira MCP Server package.
+"""
